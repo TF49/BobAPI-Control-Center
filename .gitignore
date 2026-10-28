@@ -1,0 +1,38 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.kotlin
+
+### Frontend (resource) ###
+resource/node_modules/
+resource/dist/
+resource/.pnpm-debug.log*
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+
+### Environments & Logs ###
+.env
+*.log
+
+### Archives & Docker Images ###
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+deploy/*.tar
+deploy/*.tar.gz
+deploy.tar.gz
+
+### OS ###
+.DS_Store
+Thumbs.db

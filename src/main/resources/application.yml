@@ -1,0 +1,65 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: bobapi-control-center
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/bcc_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:200649}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      pool-name: BccHikariPool
+      max-lifetime: 1800000
+      connection-timeout: 30000
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+# 自定义安全与监控配置
+bcc:
+  jwt:
+    # 256位以上密钥
+    secret: BobAPIControlCenterSecretKeyForJwtAuthenticationTokens2026Secure
+    expiration-ms: 86400000 # 24 小时
+  monitor:
+    # 默认检查周期(秒)
+    default-interval: 600
+    # 默认超时时间(秒)
+    default-timeout: 10
+    # 线程池核心大小
+    thread-pool-core-size: 5
+    thread-pool-max-size: 10
+    # 允许监控的域名白名单正则 (严格限制至 *.bob-api.com 及 *.bobdong.cn)
+    allowed-domain-pattern: "^([a-zA-Z0-9-]+\\.)*(bob-api\\.com|bobdong\\.cn)$"
+    # 是否允许解析到私网 IP (本地/内网调试开关，生产环境建议保持 false)
+    allow-private-ip: ${ALLOW_PRIVATE_IP:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized

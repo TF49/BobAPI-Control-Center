@@ -1,0 +1,73 @@
+services:
+  # MySQL 8.0 数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: bcc-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-200649}
+      MYSQL_DATABASE: ${DB_NAME:-bcc_db}
+      TZ: Asia/Shanghai
+    # 仅容器内部通信，无需映射到宿主机端口
+    # ports:
+    #   - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - bcc-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-200649}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端服务 (Spring Boot) - 直接使用离线导入的镜像
+  backend:
+    image: bcc-backend:latest
+    container_name: bcc-backend
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-bcc_db}?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-200649}
+      JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseG1GC -Dfile.encoding=UTF-8"
+      TZ: Asia/Shanghai
+    ports:
+      - "${BACKEND_PORT:-8082}:8080"
+    networks:
+      - bcc-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # 前端服务 (Nginx) - 直接使用离线导入的镜像
+  frontend:
+    image: bcc-frontend:latest
+    container_name: bcc-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8888}:80"
+    networks:
+      - bcc-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  bcc-network:
+    driver: bridge
