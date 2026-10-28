@@ -3,10 +3,15 @@ import type { Result, Project, PageResult } from '@/types'
 
 export const getProjectsPage = (params: {
   current?: number
+  page?: number
   size?: number
   keyword?: string
+  category?: string
+  status?: string
   isEnabled?: boolean
   isMonitorEnabled?: boolean
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }): Promise<Result<PageResult<Project>>> => {
   return apiClient.get('/admin/projects', { params })
 }

@@ -33,13 +33,17 @@ public class AdminProjectController {
 
     @GetMapping
     public Result<Page<Project>> getProjectPage(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "current", required = false) Integer current,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) Boolean isEnabled) {
-        return Result.success(projectService.getProjectPage(page, size, keyword, category, status, isEnabled));
+            @RequestParam(required = false) Boolean isEnabled,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        int pageNum = (current != null) ? current : page;
+        return Result.success(projectService.getProjectPage(pageNum, size, keyword, category, status, isEnabled, sortBy, sortOrder));
     }
 
     @PostMapping

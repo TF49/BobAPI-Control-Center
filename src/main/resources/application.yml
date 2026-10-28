@@ -50,8 +50,8 @@ bcc:
     # 线程池核心大小
     thread-pool-core-size: 5
     thread-pool-max-size: 10
-    # 允许监控的域名白名单正则 (严格限制至 *.bob-api.com 及 *.bobdong.cn)
-    allowed-domain-pattern: "^([a-zA-Z0-9-]+\\.)*(bob-api\\.com|bobdong\\.cn)$"
+    # 允许监控的域名白名单正则 (严格限制至 *.bob-api.com、*.bobdong.cn 及 *.dongtoken.com)
+    allowed-domain-pattern: "^([a-zA-Z0-9-]+\\.)*(bob-api\\.com|bobdong\\.cn|dongtoken\\.com)$"
     # 是否允许解析到私网 IP (本地/内网调试开关，生产环境建议保持 false)
     allow-private-ip: ${ALLOW_PRIVATE_IP:false}
 

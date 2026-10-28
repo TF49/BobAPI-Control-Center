@@ -17,7 +17,7 @@ public class UrlSafetyValidator {
     private final Pattern domainPattern;
     private final boolean allowPrivateIp;
 
-    public UrlSafetyValidator(@Value("${bcc.monitor.allowed-domain-pattern:^([a-zA-Z0-9-]+\\.)*(bob-api\\.com|bobdong\\.cn)$}") String patternStr,
+    public UrlSafetyValidator(@Value("${bcc.monitor.allowed-domain-pattern:^([a-zA-Z0-9-]+\\.)*(bob-api\\.com|bobdong\\.cn|dongtoken\\.com)$}") String patternStr,
                               @Value("${bcc.monitor.allow-private-ip:false}") boolean allowPrivateIp) {
         this.domainPattern = Pattern.compile(patternStr, Pattern.CASE_INSENSITIVE);
         this.allowPrivateIp = allowPrivateIp;

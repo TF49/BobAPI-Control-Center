@@ -15,7 +15,11 @@ import {
   ShieldCheck,
   Globe,
   SlidersHorizontal,
-  X
+  X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Clock
 } from 'lucide-react'
 import {
   getProjectsPage,
@@ -47,7 +51,7 @@ import {
   DialogFooter,
   DialogDescription
 } from '@/components/ui/dialog'
-import { formatLatency } from '@/lib/utils'
+import { formatLatency, formatDateTime } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export const ProjectsPage: React.FC = () => {
@@ -61,6 +65,10 @@ export const ProjectsPage: React.FC = () => {
   const [total, setTotal] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
+
+  // Sorting State
+  const [sortBy, setSortBy] = useState<'sortOrder' | 'id' | 'createdAt'>('sortOrder')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // Copied state for feedback
   const [copiedId, setCopiedId] = useState<number | null>(null)
@@ -97,8 +105,11 @@ export const ProjectsPage: React.FC = () => {
     try {
       const res = await getProjectsPage({
         current: currentPage,
+        page: currentPage,
         size: pageSize,
-        keyword: keyword.trim() || undefined
+        keyword: keyword.trim() || undefined,
+        sortBy,
+        sortOrder
       })
       if (res.data) {
         setProjects(res.data.records || [])
@@ -113,7 +124,43 @@ export const ProjectsPage: React.FC = () => {
 
   useEffect(() => {
     loadProjects()
-  }, [currentPage])
+  }, [currentPage, sortBy, sortOrder])
+
+  const handleSortToggle = (column: 'id' | 'createdAt' | 'sortOrder') => {
+    if (sortBy === column) {
+      if (column === 'id') {
+        if (sortOrder === 'asc') {
+          setSortOrder('desc')
+        } else {
+          setSortBy('sortOrder')
+          setSortOrder('asc')
+        }
+      } else if (column === 'createdAt') {
+        if (sortOrder === 'desc') {
+          setSortOrder('asc')
+        } else {
+          setSortBy('sortOrder')
+          setSortOrder('asc')
+        }
+      } else {
+        setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+      }
+    } else {
+      setSortBy(column)
+      setSortOrder(column === 'createdAt' ? 'desc' : 'asc')
+    }
+    setCurrentPage(1)
+  }
+
+  const renderSortIndicator = (column: 'id' | 'createdAt' | 'sortOrder') => {
+    if (sortBy !== column) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+    }
+    if (sortOrder === 'asc') {
+      return <ArrowUp className="w-3.5 h-3.5 text-blue-600 font-bold" />
+    }
+    return <ArrowDown className="w-3.5 h-3.5 text-blue-600 font-bold" />
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -401,7 +448,7 @@ export const ProjectsPage: React.FC = () => {
         </div>
 
         {/* Search Bar Row */}
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-3">
+        <form onSubmit={handleSearch} className="flex flex-col lg:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
@@ -424,7 +471,33 @@ export const ProjectsPage: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+          <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 flex-wrap">
+            {/* Sort Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-10">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="text-xs text-slate-500 font-medium whitespace-nowrap">排序:</span>
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [newBy, newOrder] = e.target.value.split('-') as [
+                    'sortOrder' | 'id' | 'createdAt',
+                    'asc' | 'desc'
+                  ]
+                  setSortBy(newBy)
+                  setSortOrder(newOrder)
+                  setCurrentPage(1)
+                }}
+                className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer pr-1"
+              >
+                <option value="sortOrder-asc">默认 (权重升序)</option>
+                <option value="sortOrder-desc">权重降序</option>
+                <option value="id-asc">ID 升序 (小到大)</option>
+                <option value="id-desc">ID 降序 (大到小)</option>
+                <option value="createdAt-desc">创建时间 (从新到旧)</option>
+                <option value="createdAt-asc">创建时间 (从旧到新)</option>
+              </select>
+            </div>
+
             <Button
               type="submit"
               size="sm"
@@ -440,8 +513,9 @@ export const ProjectsPage: React.FC = () => {
                 setKeyword('')
                 setStatusFilter('ALL')
                 setCategoryFilter('ALL')
+                setSortBy('sortOrder')
+                setSortOrder('asc')
                 setCurrentPage(1)
-                loadProjects()
               }}
               className="h-10 px-4 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl"
             >
@@ -457,20 +531,59 @@ export const ProjectsPage: React.FC = () => {
           <Table>
             <TableHeader className="bg-slate-50/80 border-b border-slate-200">
               <TableRow className="border-slate-200 hover:bg-transparent">
-                <TableHead className="w-16 text-center text-slate-600 font-semibold text-xs">排序</TableHead>
-                <TableHead className="min-w-[220px] text-slate-600 font-semibold text-xs">服务项目</TableHead>
-                <TableHead className="min-w-[260px] text-slate-600 font-semibold text-xs">目标地址 (URL)</TableHead>
-                <TableHead className="w-36 min-w-[130px] text-slate-600 font-semibold text-xs">实时健康度</TableHead>
-                <TableHead className="w-28 text-slate-600 font-semibold text-xs">响应耗时</TableHead>
-                <TableHead className="w-28 text-center text-slate-600 font-semibold text-xs">公开展示</TableHead>
-                <TableHead className="w-32 text-center text-slate-600 font-semibold text-xs">自动监控</TableHead>
-                <TableHead className="w-44 text-right pr-6 text-slate-600 font-semibold text-xs">操作</TableHead>
+                {/* ID with sort */}
+                <TableHead className="w-20 text-slate-600 font-semibold text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleSortToggle('id')}
+                    className="group inline-flex items-center gap-1.5 hover:text-blue-600 transition-colors focus:outline-none"
+                    title="点击切换ID排序"
+                  >
+                    <span>ID</span>
+                    {renderSortIndicator('id')}
+                  </button>
+                </TableHead>
+
+                {/* 排序权重 with sort */}
+                <TableHead className="w-20 text-center text-slate-600 font-semibold text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleSortToggle('sortOrder')}
+                    className="group inline-flex items-center gap-1 hover:text-blue-600 transition-colors focus:outline-none"
+                    title="点击切换排序权重排序"
+                  >
+                    <span>排序</span>
+                    {renderSortIndicator('sortOrder')}
+                  </button>
+                </TableHead>
+
+                <TableHead className="min-w-[200px] text-slate-600 font-semibold text-xs">服务项目</TableHead>
+                <TableHead className="min-w-[240px] text-slate-600 font-semibold text-xs">目标地址 (URL)</TableHead>
+                <TableHead className="w-32 min-w-[120px] text-slate-600 font-semibold text-xs">实时健康度</TableHead>
+                <TableHead className="w-24 text-slate-600 font-semibold text-xs">响应耗时</TableHead>
+                <TableHead className="w-24 text-center text-slate-600 font-semibold text-xs">公开展示</TableHead>
+                <TableHead className="w-28 text-center text-slate-600 font-semibold text-xs">自动监控</TableHead>
+
+                {/* 创建时间 with sort */}
+                <TableHead className="w-44 text-slate-600 font-semibold text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleSortToggle('createdAt')}
+                    className="group inline-flex items-center gap-1.5 hover:text-blue-600 transition-colors focus:outline-none"
+                    title="点击切换创建时间排序"
+                  >
+                    <span>创建时间</span>
+                    {renderSortIndicator('createdAt')}
+                  </button>
+                </TableHead>
+
+                <TableHead className="w-40 text-right pr-6 text-slate-600 font-semibold text-xs">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16 text-xs text-slate-500">
+                  <TableCell colSpan={10} className="text-center py-16 text-xs text-slate-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
                       <span className="font-medium text-slate-600">正在检索纳管服务列表中...</span>
@@ -479,7 +592,7 @@ export const ProjectsPage: React.FC = () => {
                 </TableRow>
               ) : displayedProjects.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16 text-xs text-slate-500">
+                  <TableCell colSpan={10} className="text-center py-16 text-xs text-slate-500">
                     <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
                       <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-1">
                         <Globe className="w-6 h-6" />
@@ -503,6 +616,13 @@ export const ProjectsPage: React.FC = () => {
                   const isChecking = checkingMap[p.id] || false
                   return (
                     <TableRow key={p.id} className="border-slate-100 hover:bg-slate-50/70 transition-colors">
+                      {/* ID */}
+                      <TableCell className="font-mono text-xs text-slate-500">
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+                          #{p.id}
+                        </span>
+                      </TableCell>
+
                       {/* Sort Order */}
                       <TableCell className="text-center font-mono text-xs text-slate-400">
                         <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100/80 font-medium text-slate-600 text-xs">
@@ -614,6 +734,14 @@ export const ProjectsPage: React.FC = () => {
                             <span>暂停</span>
                           </div>
                         )}
+                      </TableCell>
+
+                      {/* Created At */}
+                      <TableCell className="text-xs text-slate-500 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-600">
+                          <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{formatDateTime(p.createdAt)}</span>
+                        </div>
                       </TableCell>
 
                       {/* Actions */}
@@ -753,7 +881,7 @@ export const ProjectsPage: React.FC = () => {
               />
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                 <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>必须为 HTTPS 协议，且属于白名单子域名 (*.bob-api.com)。</span>
+                <span>必须为 HTTPS 协议，且属于白名单域名 (*.bob-api.com, *.bobdong.cn, *.dongtoken.com)。</span>
               </div>
             </div>
 

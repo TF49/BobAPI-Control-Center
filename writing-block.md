@@ -79,6 +79,8 @@
 | Monitor | https://monitor.bob-api.com/ | 4 |
 | AI Helper | https://helper.bob-api.com/ | 5 |
 | Invoice | https://fp.bobdong.cn/ | 6 |
+| Bob API | https://bob-api.com/ | 7 |
+| DongToken | https://dongtoken.com/ | 8 |
 
 以上项目地址为初始配置。系统管理员可以在后台编辑项目名称、描述、图标、地址、排序及监控设置。
 

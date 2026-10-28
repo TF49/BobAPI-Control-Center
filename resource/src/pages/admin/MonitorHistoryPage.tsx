@@ -13,7 +13,11 @@ import {
   ArrowUpRight,
   ShieldCheck,
   XCircle,
-  Hash
+  Hash,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  SlidersHorizontal
 } from 'lucide-react'
 import { getMonitorHistory } from '@/api/monitor'
 import { getProjectsPage } from '@/api/project'
@@ -52,6 +56,10 @@ export const MonitorHistoryPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [triggerFilter, setTriggerFilter] = useState<string>('ALL')
 
+  // Sorting
+  const [sortBy, setSortBy] = useState<'id' | 'checkTime'>('checkTime')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
   // Detail Modal
   const [detailItem, setDetailItem] = useState<MonitorCheckResult | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -74,10 +82,13 @@ export const MonitorHistoryPage: React.FC = () => {
 
       const res = await getMonitorHistory({
         current: currentPage,
+        page: currentPage,
         size: pageSize,
         projectId: selectedProjectId,
         isSuccess,
-        triggerType
+        triggerType,
+        sortBy,
+        sortOrder
       })
 
       if (res.data) {
@@ -97,7 +108,27 @@ export const MonitorHistoryPage: React.FC = () => {
 
   useEffect(() => {
     loadHistory()
-  }, [currentPage, selectedProjectId, statusFilter, triggerFilter])
+  }, [currentPage, selectedProjectId, statusFilter, triggerFilter, sortBy, sortOrder])
+
+  const handleSortToggle = (col: 'id' | 'checkTime') => {
+    if (sortBy === col) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortBy(col)
+      setSortOrder(col === 'id' ? 'asc' : 'desc')
+    }
+    setCurrentPage(1)
+  }
+
+  const renderSortIndicator = (col: 'id' | 'checkTime') => {
+    if (sortBy !== col) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+    }
+    if (sortOrder === 'asc') {
+      return <ArrowUp className="w-3.5 h-3.5 text-blue-600 font-bold" />
+    }
+    return <ArrowDown className="w-3.5 h-3.5 text-blue-600 font-bold" />
+  }
 
   const projectMap = useMemo(() => {
     const map: Record<number, Project> = {}
@@ -325,6 +356,27 @@ export const MonitorHistoryPage: React.FC = () => {
             </select>
           </div>
 
+          {/* Sort Selector */}
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-9">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="text-xs text-slate-500 font-medium whitespace-nowrap">排序:</span>
+            <select
+              value={`${sortBy}-${sortOrder}`}
+              onChange={(e) => {
+                const [newBy, newOrder] = e.target.value.split('-') as ['id' | 'checkTime', 'asc' | 'desc']
+                setSortBy(newBy)
+                setSortOrder(newOrder)
+                setCurrentPage(1)
+              }}
+              className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="checkTime-desc">检查时间 (从新到旧)</option>
+              <option value="checkTime-asc">检查时间 (从旧到新)</option>
+              <option value="id-desc">ID 降序 (大到小)</option>
+              <option value="id-asc">ID 升序 (小到大)</option>
+            </select>
+          </div>
+
           {/* Clear Filters Button */}
           {hasActiveFilter && (
             <Button
@@ -334,6 +386,8 @@ export const MonitorHistoryPage: React.FC = () => {
                 setSelectedProjectId(undefined)
                 setStatusFilter('ALL')
                 setTriggerFilter('ALL')
+                setSortBy('checkTime')
+                setSortOrder('desc')
                 setCurrentPage(1)
               }}
               className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-9 px-3 rounded-xl ml-auto gap-1.5"
@@ -351,7 +405,17 @@ export const MonitorHistoryPage: React.FC = () => {
           <Table>
             <TableHeader className="bg-slate-50/80 border-b border-slate-200">
               <TableRow className="border-slate-200 hover:bg-transparent">
-                <TableHead className="w-20 text-slate-600 font-semibold text-xs">ID</TableHead>
+                <TableHead className="w-24 text-slate-600 font-semibold text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleSortToggle('id')}
+                    className="group inline-flex items-center gap-1.5 hover:text-blue-600 transition-colors focus:outline-none"
+                    title="点击切换ID排序"
+                  >
+                    <span>ID</span>
+                    {renderSortIndicator('id')}
+                  </button>
+                </TableHead>
                 <TableHead className="min-w-[200px] text-slate-600 font-semibold text-xs">关联服务项目</TableHead>
                 <TableHead className="w-36 min-w-[130px] text-slate-600 font-semibold text-xs">探测状态</TableHead>
                 <TableHead className="w-28 text-slate-600 font-semibold text-xs">HTTP 状态码</TableHead>
@@ -359,7 +423,17 @@ export const MonitorHistoryPage: React.FC = () => {
                 <TableHead className="w-32 text-slate-600 font-semibold text-xs">触发方式</TableHead>
                 <TableHead className="w-20 text-center text-slate-600 font-semibold text-xs">重试数</TableHead>
                 <TableHead className="min-w-[220px] text-slate-600 font-semibold text-xs">检测摘要与诊断</TableHead>
-                <TableHead className="w-44 text-slate-600 font-semibold text-xs">检查时间</TableHead>
+                <TableHead className="w-44 text-slate-600 font-semibold text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleSortToggle('checkTime')}
+                    className="group inline-flex items-center gap-1.5 hover:text-blue-600 transition-colors focus:outline-none"
+                    title="点击切换检查时间排序"
+                  >
+                    <span>检查时间</span>
+                    {renderSortIndicator('checkTime')}
+                  </button>
+                </TableHead>
                 <TableHead className="w-16 text-right pr-6 text-slate-600 font-semibold text-xs">详情</TableHead>
               </TableRow>
             </TableHeader>

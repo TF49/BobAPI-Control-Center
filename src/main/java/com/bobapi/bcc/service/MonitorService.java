@@ -11,6 +11,7 @@ import java.util.Map;
 public interface MonitorService {
     DashboardSummaryDTO getDashboardSummary();
     Page<MonitorCheckResult> getHistoryPage(int page, int size, Long projectId, Boolean isSuccess, Integer httpStatus, String errorType, LocalDateTime startTime, LocalDateTime endTime);
+    Page<MonitorCheckResult> getHistoryPage(int page, int size, Long projectId, Boolean isSuccess, Integer httpStatus, String errorType, LocalDateTime startTime, LocalDateTime endTime, String sortBy, String sortOrder);
     Map<String, Object> getProjectStats(Long projectId, int days);
     List<Map<String, Object>> getProjectTrend(Long projectId, int days);
     List<Map<String, Object>> getGlobalTrend(int days);

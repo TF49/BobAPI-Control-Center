@@ -68,6 +68,11 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public Page<MonitorCheckResult> getHistoryPage(int page, int size, Long projectId, Boolean isSuccess, Integer httpStatus, String errorType, LocalDateTime startTime, LocalDateTime endTime) {
+        return getHistoryPage(page, size, projectId, isSuccess, httpStatus, errorType, startTime, endTime, null, null);
+    }
+
+    @Override
+    public Page<MonitorCheckResult> getHistoryPage(int page, int size, Long projectId, Boolean isSuccess, Integer httpStatus, String errorType, LocalDateTime startTime, LocalDateTime endTime, String sortBy, String sortOrder) {
         Page<MonitorCheckResult> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<MonitorCheckResult> wrapper = new LambdaQueryWrapper<>();
 
@@ -90,7 +95,23 @@ public class MonitorServiceImpl implements MonitorService {
             wrapper.le(MonitorCheckResult::getCheckTime, endTime);
         }
 
-        wrapper.orderByDesc(MonitorCheckResult::getCheckTime);
+        boolean isAsc = "asc".equalsIgnoreCase(sortOrder);
+        if ("id".equalsIgnoreCase(sortBy)) {
+            if (isAsc) {
+                wrapper.orderByAsc(MonitorCheckResult::getId);
+            } else {
+                wrapper.orderByDesc(MonitorCheckResult::getId);
+            }
+        } else if ("checkTime".equalsIgnoreCase(sortBy) || "createdAt".equalsIgnoreCase(sortBy) || "created_at".equalsIgnoreCase(sortBy)) {
+            if (isAsc) {
+                wrapper.orderByAsc(MonitorCheckResult::getCheckTime);
+            } else {
+                wrapper.orderByDesc(MonitorCheckResult::getCheckTime);
+            }
+        } else {
+            wrapper.orderByDesc(MonitorCheckResult::getCheckTime);
+        }
+
         return resultMapper.selectPage(pageParam, wrapper);
     }
 

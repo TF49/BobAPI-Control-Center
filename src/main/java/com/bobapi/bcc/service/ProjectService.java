@@ -17,6 +17,7 @@ public interface ProjectService {
 
     // 管理接口方法
     Page<Project> getProjectPage(int page, int size, String keyword, String category, String status, Boolean isEnabled);
+    Page<Project> getProjectPage(int page, int size, String keyword, String category, String status, Boolean isEnabled, String sortBy, String sortOrder);
     Project getProjectById(Long id);
     Project createProject(ProjectCreateDTO dto);
     Project updateProject(Long id, ProjectUpdateDTO dto);

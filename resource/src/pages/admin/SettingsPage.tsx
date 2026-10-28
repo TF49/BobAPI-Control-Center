@@ -226,7 +226,7 @@ export const SettingsPage: React.FC = () => {
                   <span className="text-slate-400">域名白名单校验:</span>
                   <span className="font-semibold text-emerald-600 flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>*.bob-api.com</span>
+                    <span>*.bob-api.com / *.bobdong.cn / *.dongtoken.com</span>
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-slate-600">

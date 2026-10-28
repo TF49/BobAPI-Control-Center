@@ -7,7 +7,7 @@
 ## 一、核心特性
 
 1. **公开项目导航门户 (`/`)**
-   - 集中呈现 BobAPI 现有各子域名项目入口（VPN、Tools、Project、Monitor、AI Helper、Invoice）。
+   - 集中呈现 BobAPI 现有各子域名项目入口（VPN、Tools、Project、Monitor、AI Helper、Invoice、Bob API、DongToken）。
    - 实时运行状态健康徽标（UP 正常在线、DOWN 访问异常、UNKNOWN 检测中）。
    - 实时响应时间（ms）与最近检查时间，每 30 秒自动倒计时刷新。
    - 一键新标签页安全跳转。
@@ -15,7 +15,7 @@
 2. **网站可用性自动监控引擎**
    - **自动化调度：** 基于 Spring Scheduler 线程池，每隔 10 分钟自动对启用监控的项目发起 HTTP GET 检测。
    - **受控复查与防抖动：** 首次检测失败后，自动延迟 1 秒执行复查；两次均失败时才将当前确认状态标记为异常，防止网络短暂抖动误报。
-   - **SSRF 安全防护：** 强制限制为 HTTPS 协议，严格校验目标域名白名单（限制为 `*.bob-api.com` 及 `*.bobdong.cn`），解析 DNS 彻底阻断私网 IP（10.x, 172.16-31.x, 192.168.x）、本地回环（127.0.0.1）及云厂商元数据服务（169.254.169.254）。
+   - **SSRF 安全防护：** 强制限制为 HTTPS 协议，严格校验目标域名白名单（限制为 `*.bob-api.com`、`*.bobdong.cn` 及 `*.dongtoken.com`），解析 DNS 彻底阻断私网 IP（10.x, 172.16-31.x, 192.168.x）、本地回环（127.0.0.1）及云厂商元数据服务（169.254.169.254）。
    - **手动即时检查：** 管理员可在列表或详情页随时点击“立即检查”触发即时检测并获取实时响应。
 
 3. **管理控制台 (`/admin`)**
@@ -106,6 +106,8 @@ BobAPI Control Center/
 4. **Monitor：** `https://monitor.bob-api.com/` (默认排序: 4)
 5. **AI Helper：** `https://helper.bob-api.com/` (默认排序: 5)
 6. **Invoice：** `https://fp.bobdong.cn/` (默认排序: 6)
+7. **Bob API：** `https://bob-api.com/` (默认排序: 7)
+8. **DongToken：** `https://dongtoken.com/` (默认排序: 8)
 
 ### 2. 初始管理员账号
 - **用户名：** `admin`

@@ -1,5 +1,6 @@
 package com.bobapi.bcc;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bobapi.bcc.common.BusinessException;
 import com.bobapi.bcc.dto.SettingsDTO;
 import com.bobapi.bcc.dto.TestEmailRequestDTO;
@@ -9,12 +10,14 @@ import com.bobapi.bcc.mapper.ProjectMapper;
 import com.bobapi.bcc.mapper.UserMapper;
 import com.bobapi.bcc.monitor.UrlSafetyValidator;
 import com.bobapi.bcc.service.MailNotificationService;
+import com.bobapi.bcc.service.ProjectService;
 import com.bobapi.bcc.service.SystemConfigService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +43,9 @@ class BccApplicationTests {
     @Autowired
     private MailNotificationService mailNotificationService;
 
+    @Autowired
+    private ProjectService projectService;
+
     @Test
     void testContextLoadsAndSeedData() {
         // 验证用户表中存在 admin
@@ -49,20 +55,33 @@ class BccApplicationTests {
         assertNotNull(admin, "初始管理员 admin 应当存在");
         assertTrue(passwordEncoder.matches("admin123", admin.getPasswordHash()), "初始密码 admin123 应当匹配");
 
-        // 验证项目数与新增的发票系统项目
+        // 验证项目数与预置/新增项目
         List<Project> projects = projectMapper.selectList(null);
-        assertTrue(projects.size() >= 6, "项目数应当至少为6个");
+        assertTrue(projects.size() >= 8, "项目数应当至少为8个");
         Project invoice = projects.stream().filter(p -> "https://fp.bobdong.cn/".equals(p.getUrl())).findFirst().orElse(null);
         assertNotNull(invoice, "Invoice 发票管理系统项目应当存在");
         assertEquals("Invoice", invoice.getName());
         assertEquals("invoice", invoice.getCode());
+
+        Project bobApi = projects.stream().filter(p -> "https://bob-api.com/".equals(p.getUrl())).findFirst().orElse(null);
+        assertNotNull(bobApi, "Bob API 项目应当存在");
+        assertEquals("Bob API", bobApi.getName());
+        assertEquals("bob-api", bobApi.getCode());
+
+        Project dongToken = projects.stream().filter(p -> "https://dongtoken.com/".equals(p.getUrl())).findFirst().orElse(null);
+        assertNotNull(dongToken, "DongToken 项目应当存在");
+        assertEquals("DongToken", dongToken.getName());
+        assertEquals("dongtoken", dongToken.getCode());
     }
 
     @Test
     void testUrlSafetyValidator() {
-        // 白名单测试 (bob-api.com 及 bobdong.cn)
+        // 白名单测试 (bob-api.com、bobdong.cn 及 dongtoken.com)
         assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://fp.bobdong.cn/"));
         assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://vpn.bob-api.com/"));
+        assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://bob-api.com/"));
+        assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://dongtoken.com/"));
+        assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://api.dongtoken.com/"));
 
         // 非法协议测试
         assertThrows(BusinessException.class, () -> urlSafetyValidator.validateUrl("http://fp.bobdong.cn/"));
@@ -100,5 +119,36 @@ class BccApplicationTests {
         TestEmailRequestDTO invalidReq = new TestEmailRequestDTO();
         invalidReq.setSmtpHost("");
         assertThrows(BusinessException.class, () -> mailNotificationService.sendTestEmail(invalidReq));
+    }
+
+    @Test
+    void testProjectPageSorting() {
+        // ID 升序
+        Page<Project> pageIdAsc = projectService.getProjectPage(1, 10, null, null, null, null, "id", "asc");
+        List<Project> recordsIdAsc = pageIdAsc.getRecords();
+        assertTrue(recordsIdAsc.size() >= 2);
+        for (int i = 0; i < recordsIdAsc.size() - 1; i++) {
+            assertTrue(recordsIdAsc.get(i).getId() <= recordsIdAsc.get(i + 1).getId(), "ID应当升序排列");
+        }
+
+        // ID 降序
+        Page<Project> pageIdDesc = projectService.getProjectPage(1, 10, null, null, null, null, "id", "desc");
+        List<Project> recordsIdDesc = pageIdDesc.getRecords();
+        assertTrue(recordsIdDesc.size() >= 2);
+        for (int i = 0; i < recordsIdDesc.size() - 1; i++) {
+            assertTrue(recordsIdDesc.get(i).getId() >= recordsIdDesc.get(i + 1).getId(), "ID应当降序排列");
+        }
+
+        // 创建时间 降序
+        Page<Project> pageCreatedAtDesc = projectService.getProjectPage(1, 10, null, null, null, null, "createdAt", "desc");
+        List<Project> recordsCreatedDesc = pageCreatedAtDesc.getRecords();
+        assertTrue(recordsCreatedDesc.size() >= 2);
+        for (int i = 0; i < recordsCreatedDesc.size() - 1; i++) {
+            LocalDateTime t1 = recordsCreatedDesc.get(i).getCreatedAt();
+            LocalDateTime t2 = recordsCreatedDesc.get(i + 1).getCreatedAt();
+            if (t1 != null && t2 != null) {
+                assertTrue(!t1.isBefore(t2), "创建时间应当降序排列");
+            }
+        }
     }
 }

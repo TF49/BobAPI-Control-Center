@@ -7,12 +7,15 @@ export const getDashboardSummary = (): Promise<Result<DashboardSummary>> => {
 
 export const getMonitorHistory = (params: {
   current?: number
+  page?: number
   size?: number
   projectId?: number
   isSuccess?: boolean
   triggerType?: string
   startTime?: string
   endTime?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }): Promise<Result<PageResult<MonitorCheckResult>>> => {
   return apiClient.get('/admin/monitor/history', { params })
 }

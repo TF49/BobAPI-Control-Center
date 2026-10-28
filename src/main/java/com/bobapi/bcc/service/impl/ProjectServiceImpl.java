@@ -78,6 +78,11 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Page<Project> getProjectPage(int page, int size, String keyword, String category, String status, Boolean isEnabled) {
+        return getProjectPage(page, size, keyword, category, status, isEnabled, null, null);
+    }
+
+    @Override
+    public Page<Project> getProjectPage(int page, int size, String keyword, String category, String status, Boolean isEnabled, String sortBy, String sortOrder) {
         Page<Project> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
 
@@ -94,7 +99,28 @@ public class ProjectServiceImpl implements ProjectService {
             wrapper.eq(Project::getIsEnabled, isEnabled);
         }
 
-        wrapper.orderByAsc(Project::getSortOrder).orderByDesc(Project::getId);
+        boolean isAsc = "asc".equalsIgnoreCase(sortOrder);
+        if ("id".equalsIgnoreCase(sortBy)) {
+            if (isAsc) {
+                wrapper.orderByAsc(Project::getId);
+            } else {
+                wrapper.orderByDesc(Project::getId);
+            }
+        } else if ("createdAt".equalsIgnoreCase(sortBy) || "created_at".equalsIgnoreCase(sortBy)) {
+            if (isAsc) {
+                wrapper.orderByAsc(Project::getCreatedAt).orderByAsc(Project::getId);
+            } else {
+                wrapper.orderByDesc(Project::getCreatedAt).orderByDesc(Project::getId);
+            }
+        } else {
+            // 默认排序字段：按配置的 sortOrder 排序
+            if ("sortOrder".equalsIgnoreCase(sortBy) && !isAsc) {
+                wrapper.orderByDesc(Project::getSortOrder).orderByDesc(Project::getId);
+            } else {
+                wrapper.orderByAsc(Project::getSortOrder).orderByDesc(Project::getId);
+            }
+        }
+
         return projectMapper.selectPage(pageParam, wrapper);
     }
 
