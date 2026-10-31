@@ -184,4 +184,22 @@ class BccApplicationTests {
         assertEquals(2, page.getRecords().size(), "分页拦截器必须限制当前页记录数为 2，禁止全表加载");
         assertTrue(page.getTotal() >= 5, "分页拦截器必须正确统计总条数 total");
     }
+
+    @Test
+    void testCleanHistoryApiAndScheduler() {
+        // 插入一条 40 天前的旧记录
+        com.bobapi.bcc.entity.MonitorCheckResult oldCheck = new com.bobapi.bcc.entity.MonitorCheckResult();
+        oldCheck.setProjectId(1L);
+        oldCheck.setCheckTime(LocalDateTime.now().minusDays(40));
+        oldCheck.setIsSuccess(true);
+        oldCheck.setHttpStatus(200);
+        oldCheck.setResponseTime(50L);
+        oldCheck.setTriggerType("SCHEDULE");
+        monitorCheckResultMapper.insert(oldCheck);
+
+        // 执行清理保留 30 天
+        java.util.Map<String, Object> cleanRes = monitorService.cleanHistory(30, false);
+        assertNotNull(cleanRes);
+        assertTrue(((Number) cleanRes.get("deletedCount")).intValue() >= 1, "应当成功清理至少 1 条 40 天前的过期记录");
+    }
 }

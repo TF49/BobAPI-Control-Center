@@ -41,3 +41,10 @@ export const getProjectTrend = (id: number, days: number = 1): Promise<Result<Ho
 export const getGlobalTrend = (days: number = 1): Promise<Result<HourlyTrend[]>> => {
   return apiClient.get('/admin/monitor/summary', { params: { days } })
 }
+
+export const cleanMonitorHistory = (params: {
+  days?: number
+  cleanAll?: boolean
+}): Promise<Result<{ deletedCount: number; remainingCount: number }>> => {
+  return apiClient.post('/admin/monitor/history/clean', null, { params })
+}

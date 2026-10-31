@@ -13,9 +13,12 @@ import {
   Server,
   Globe,
   Mail,
-  Send
+  Send,
+  Trash2,
+  RefreshCw
 } from 'lucide-react'
 import { getSettings, updateSettings, sendTestEmail } from '@/api/settings'
+import { cleanMonitorHistory } from '@/api/monitor'
 import type { Settings } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,6 +49,21 @@ export const SettingsPage: React.FC = () => {
   const [testingEmail, setTestingEmail] = useState(false)
   const [testRecipient, setTestRecipient] = useState('')
   const [currentTimePreview, setCurrentTimePreview] = useState<string>('')
+  const [cleaning, setCleaning] = useState(false)
+
+  const handleInstantClean = async () => {
+    setCleaning(true)
+    try {
+      const res = await cleanMonitorHistory({ days: settings.historyRetentionDays || 30 })
+      if (res.data) {
+        toast.success(`成功按当前保留期(${settings.historyRetentionDays}天)清理 ${res.data.deletedCount} 条过期流水，当前剩余 ${res.data.remainingCount} 条`)
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '清理历史记录失败')
+    } finally {
+      setCleaning(false)
+    }
+  }
 
   // Update clock preview
   useEffect(() => {
@@ -533,6 +551,28 @@ export const SettingsPage: React.FC = () => {
                           {days}天
                         </button>
                       ))}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>后台定时清理已就绪 (每 4 小时巡检 + 每日凌晨 3:00 深度清理)</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleInstantClean}
+                        disabled={cleaning}
+                        className="h-7 px-2.5 text-[11px] gap-1 border-slate-200 text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0 self-start sm:self-auto"
+                      >
+                        {cleaning ? (
+                          <RefreshCw className="w-3 h-3 animate-spin text-rose-600" />
+                        ) : (
+                          <Trash2 className="w-3 h-3 text-slate-400" />
+                        )}
+                        <span>立即执行归档清理</span>
+                      </Button>
                     </div>
                   </div>
                 </div>

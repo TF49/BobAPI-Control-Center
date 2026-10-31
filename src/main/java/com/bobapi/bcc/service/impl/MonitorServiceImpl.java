@@ -9,6 +9,7 @@ import com.bobapi.bcc.mapper.MonitorCheckResultMapper;
 import com.bobapi.bcc.mapper.ProjectMapper;
 import com.bobapi.bcc.service.MonitorService;
 import com.bobapi.bcc.service.SystemConfigService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class MonitorServiceImpl implements MonitorService {
 
@@ -189,5 +191,26 @@ public class MonitorServiceImpl implements MonitorService {
             result.add(item);
         }
         return result;
+    }
+
+    @Override
+    public Map<String, Object> cleanHistory(int days, boolean cleanAll) {
+        int deleted;
+        if (cleanAll) {
+            deleted = resultMapper.delete(null);
+            log.info("管理员全量清空监控历史日志，共清理记录: {} 条", deleted);
+        } else {
+            int retentionDays = Math.max(1, days);
+            LocalDateTime expireTime = LocalDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
+            deleted = resultMapper.delete(new LambdaQueryWrapper<MonitorCheckResult>()
+                    .lt(MonitorCheckResult::getCheckTime, expireTime));
+            log.info("管理员触发过期监控历史清理: 保留天数={}天, 清理记录: {} 条", retentionDays, deleted);
+        }
+
+        Long remaining = resultMapper.selectCount(null);
+        Map<String, Object> res = new HashMap<>();
+        res.put("deletedCount", deleted);
+        res.put("remainingCount", remaining != null ? remaining : 0);
+        return res;
     }
 }

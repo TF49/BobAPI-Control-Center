@@ -17,9 +17,11 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Trash2,
+  Sparkles
 } from 'lucide-react'
-import { getMonitorHistory } from '@/api/monitor'
+import { getMonitorHistory, cleanMonitorHistory } from '@/api/monitor'
 import { getProjectsPage } from '@/api/project'
 import type { MonitorCheckResult, Project } from '@/types'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -39,9 +41,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
+  DialogFooter
 } from '@/components/ui/dialog'
 import { formatDateTime, formatLatency } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export const MonitorHistoryPage: React.FC = () => {
   const [logs, setLogs] = useState<MonitorCheckResult[]>([])
@@ -63,6 +67,32 @@ export const MonitorHistoryPage: React.FC = () => {
   // Detail Modal
   const [detailItem, setDetailItem] = useState<MonitorCheckResult | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+
+  // Clean Modal State
+  const [cleanDialogOpen, setCleanDialogOpen] = useState(false)
+  const [cleanDays, setCleanDays] = useState<number>(7)
+  const [isCleanAll, setIsCleanAll] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
+
+  const handleCleanHistory = async () => {
+    setCleaning(true)
+    try {
+      const res = await cleanMonitorHistory({
+        days: isCleanAll ? undefined : cleanDays,
+        cleanAll: isCleanAll
+      })
+      if (res.data) {
+        toast.success(`成功清理 ${res.data.deletedCount} 条历史流水，当前剩余 ${res.data.remainingCount} 条`)
+        setCleanDialogOpen(false)
+        setIsCleanAll(false)
+        loadHistory()
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '清理历史流水记录失败')
+    } finally {
+      setCleaning(false)
+    }
+  }
 
   const loadProjects = async () => {
     try {
@@ -205,6 +235,16 @@ export const MonitorHistoryPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCleanDialogOpen(true)}
+            className="h-9 px-3 gap-1.5 border-slate-200 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 shadow-xs font-medium transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-slate-500" />
+            <span>定时清理 / 归档维护</span>
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -694,6 +734,115 @@ export const MonitorHistoryPage: React.FC = () => {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Clean History Dialog */}
+      <Dialog open={cleanDialogOpen} onOpenChange={setCleanDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-white border-slate-200 shadow-xl rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-slate-900 text-lg">
+              <Trash2 className="w-5 h-5 text-rose-600" />
+              <span>监控历史日志清理与归档维护</span>
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 text-xs">
+              定期清理超期历史流水，释放数据库存储并保持控制台毫秒级极速响应
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Auto-clean Status Box */}
+            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-xs space-y-1.5">
+              <div className="flex items-center gap-1.5 font-semibold text-blue-900">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                <span>后台自动化定时清理策略已启用</span>
+              </div>
+              <p className="text-blue-700 leading-relaxed text-[11px]">
+                调度引擎每 4 小时进行一次自动轻量巡检，并在每日凌晨 3:00 自动清理超期记录。同时具备 20,000 条最大容量安全上限保护。
+              </p>
+            </div>
+
+            {/* Current Total */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+              <span className="text-slate-600">当前累计审计记录数</span>
+              <span className="font-mono font-bold text-slate-900 text-sm">
+                {total} 条
+              </span>
+            </div>
+
+            {/* Clean options */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-800 block">
+                选择即时清理保留范围
+              </label>
+
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: '保留 3 天内', desc: '清理 3 天前流水', days: 3 },
+                  { label: '保留 7 天内', desc: '清理 7 天前流水', days: 7 },
+                  { label: '保留 15 天内', desc: '清理 15 天前流水', days: 15 },
+                  { label: '保留 30 天内', desc: '清理 30 天前流水', days: 30 }
+                ].map((item) => (
+                  <button
+                    key={item.days}
+                    type="button"
+                    onClick={() => {
+                      setIsCleanAll(false)
+                      setCleanDays(item.days)
+                    }}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      !isCleanAll && cleanDays === item.days
+                        ? 'border-blue-600 bg-blue-50/60 ring-1 ring-blue-600'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div className="text-xs font-semibold text-slate-900">{item.label}</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">{item.desc}</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Danger Option: Clean All */}
+              <button
+                type="button"
+                onClick={() => setIsCleanAll(true)}
+                className={`w-full p-2.5 rounded-xl border text-left transition-all ${
+                  isCleanAll
+                    ? 'border-rose-600 bg-rose-50/60 ring-1 ring-rose-600'
+                    : 'border-slate-200 hover:border-rose-200 bg-white'
+                }`}
+              >
+                <div className="text-xs font-semibold text-rose-600 flex items-center justify-between">
+                  <span>清空所有历史流水 (全部清零)</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 font-bold">高危</span>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-0.5">彻底清空历史表中所有记录，仅保留基础项目配置</div>
+              </button>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCleanDialogOpen(false)}
+              disabled={cleaning}
+              className="text-xs"
+            >
+              取消
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleCleanHistory}
+              disabled={cleaning}
+              className={`text-xs gap-1.5 ${
+                isCleanAll ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              {cleaning && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+              <span>{isCleanAll ? '确认彻底清空' : `确认清理并保留${cleanDays}天`}</span>
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

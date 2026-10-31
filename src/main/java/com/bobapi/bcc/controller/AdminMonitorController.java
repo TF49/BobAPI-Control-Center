@@ -8,6 +8,7 @@ import com.bobapi.bcc.service.MonitorService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -75,5 +76,12 @@ public class AdminMonitorController {
     @GetMapping("/monitor/summary")
     public Result<List<Map<String, Object>>> getGlobalTrend(@RequestParam(defaultValue = "1") int days) {
         return Result.success(monitorService.getGlobalTrend(days));
+    }
+
+    @PostMapping("/monitor/history/clean")
+    public Result<Map<String, Object>> cleanHistory(
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(defaultValue = "false") boolean cleanAll) {
+        return Result.success(monitorService.cleanHistory(days, cleanAll));
     }
 }

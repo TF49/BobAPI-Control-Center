@@ -16,4 +16,5 @@ public interface MonitorService {
     Map<String, Object> getProjectStats(Long projectId, int days);
     List<Map<String, Object>> getProjectTrend(Long projectId, int days);
     List<Map<String, Object>> getGlobalTrend(int days);
+    Map<String, Object> cleanHistory(int days, boolean cleanAll);
 }

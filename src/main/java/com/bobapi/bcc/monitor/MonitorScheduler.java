@@ -135,9 +135,25 @@ public class MonitorScheduler {
     }
 
     /**
-     * 每日凌晨 3:00 自动清理过期历史记录
+     * 自动定时清理调度任务：
+     * 1. 每日凌晨 3:00 执行深度清理
+     * 2. 每 4 小时执行一次常规周期清理
      */
     @Scheduled(cron = "0 0 3 * * ?")
+    public void dailyDeepClean() {
+        cleanExpiredHistory();
+        enforceMaxRecordLimit(20000);
+    }
+
+    @Scheduled(fixedRate = 4 * 3600 * 1000, initialDelay = 60000)
+    public void periodicClean() {
+        cleanExpiredHistory();
+        enforceMaxRecordLimit(20000);
+    }
+
+    /**
+     * 依据系统配置的归档保留天数清理过期历史记录
+     */
     public void cleanExpiredHistory() {
         try {
             int retentionDays = configService.getSettings().getHistoryRetentionDays();
@@ -149,6 +165,30 @@ public class MonitorScheduler {
             }
         } catch (Exception e) {
             log.error("清理过期监控日志异常: ", e);
+        }
+    }
+
+    /**
+     * 数据库记录上限容量保护：当审计流水记录总数超出阈值时，自动修剪最早的数据
+     */
+    public void enforceMaxRecordLimit(int maxLimit) {
+        try {
+            Long totalCount = resultMapper.selectCount(null);
+            if (totalCount != null && totalCount > maxLimit) {
+                long excess = totalCount - maxLimit;
+                List<MonitorCheckResult> oldest = resultMapper.selectList(new LambdaQueryWrapper<MonitorCheckResult>()
+                        .select(MonitorCheckResult::getId)
+                        .orderByAsc(MonitorCheckResult::getId)
+                        .last("LIMIT " + excess));
+                if (!oldest.isEmpty()) {
+                    Long thresholdId = oldest.get(oldest.size() - 1).getId();
+                    int deleted = resultMapper.delete(new LambdaQueryWrapper<MonitorCheckResult>()
+                            .le(MonitorCheckResult::getId, thresholdId));
+                    log.info("审计流水达到最大容量安全阈值({}条), 自动修剪最早记录: {} 条", maxLimit, deleted);
+                }
+            }
+        } catch (Exception e) {
+            log.error("执行记录上限保护修剪异常: ", e);
         }
     }
 }
