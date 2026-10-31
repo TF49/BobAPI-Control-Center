@@ -607,44 +607,35 @@ export const SettingsPage: React.FC = () => {
 
               <CardContent className="p-6 space-y-6">
                 {/* SMTP Presets */}
-                <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200/90 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                      常用 SMTP 服务商一键预设
-                    </span>
-                    <span className="text-[11px] text-slate-400">点击自动填充服务器与端口</span>
+                      QQ 邮箱快捷配置预设
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      一键快速填充 QQ 邮箱发信服务器 (smtp.qq.com)、SSL 加密及 465 端口
+                    </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {[
-                      { name: 'QQ 邮箱', host: 'smtp.qq.com', port: 465, ssl: true },
-                      { name: '163 网易邮箱', host: 'smtp.163.com', port: 465, ssl: true },
-                      { name: '飞书企业邮箱', host: 'smtp.feishu.cn', port: 465, ssl: true },
-                      { name: '阿里企业邮箱', host: 'smtp.mxhichina.com', port: 465, ssl: true },
-                      { name: 'Gmail', host: 'smtp.gmail.com', port: 587, ssl: false }
-                    ].map((preset) => (
-                      <button
-                        key={preset.name}
-                        type="button"
-                        onClick={() => {
-                          setSettings({
-                            ...settings,
-                            smtpHost: preset.host,
-                            smtpPort: preset.port,
-                            smtpSslEnabled: preset.ssl
-                          })
-                          toast.info(`已载入 ${preset.name} 预设: ${preset.host}:${preset.port}`)
-                        }}
-                        className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all ${
-                          settings.smtpHost === preset.host
-                            ? 'bg-rose-50 text-rose-700 border-rose-200 font-bold shadow-xs'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-                        }`}
-                      >
-                        {preset.name}
-                      </button>
-                    ))}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettings({
+                        ...settings,
+                        smtpHost: 'smtp.qq.com',
+                        smtpPort: 465,
+                        smtpSslEnabled: true
+                      })
+                      toast.info('已自动载入 QQ 邮箱预设：smtp.qq.com:465 (SSL)')
+                    }}
+                    className={`text-xs px-3.5 py-1.5 rounded-lg border font-medium transition-all shrink-0 ${
+                      settings.smtpHost === 'smtp.qq.com' && settings.smtpPort === 465 && settings.smtpSslEnabled
+                        ? 'bg-rose-50 text-rose-700 border-rose-200 font-bold shadow-xs'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    载入 QQ 邮箱预设
+                  </button>
                 </div>
 
                 {/* SMTP Server & Port & SSL */}
@@ -654,7 +645,7 @@ export const SettingsPage: React.FC = () => {
                       SMTP 服务器地址
                     </label>
                     <Input
-                      placeholder="如 smtp.qq.com 或 smtp.feishu.cn"
+                      placeholder="如 smtp.qq.com"
                       value={settings.smtpHost || ''}
                       onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
                       className="h-10 text-xs font-mono border-slate-200 bg-white text-slate-900 rounded-xl"
@@ -697,7 +688,7 @@ export const SettingsPage: React.FC = () => {
                       发信账号 / 用户名
                     </label>
                     <Input
-                      placeholder="如 notice@domain.com 或 123456@qq.com"
+                      placeholder="如 your_account@qq.com"
                       value={settings.smtpUsername || ''}
                       onChange={(e) => setSettings({ ...settings, smtpUsername: e.target.value })}
                       className="h-10 text-xs font-mono border-slate-200 bg-white text-slate-900 rounded-xl"
@@ -709,11 +700,11 @@ export const SettingsPage: React.FC = () => {
                       <label className="text-xs font-semibold text-slate-800">
                         SMTP 密码 / 客户端授权码
                       </label>
-                      <span className="text-[11px] text-slate-400">如 QQ/163 授权码</span>
+                      <span className="text-[11px] text-slate-400">QQ 邮箱 16 位授权码</span>
                     </div>
                     <Input
                       type="password"
-                      placeholder={settings.smtpPassword ? '****** (已配置，留空或保持星号不修改)' : '请输入发信密码或授权码'}
+                      placeholder={settings.smtpPassword ? '****** (已配置，留空或保持星号不修改)' : '请输入 QQ 邮箱 16 位客户端授权码'}
                       value={settings.smtpPassword || ''}
                       onChange={(e) => setSettings({ ...settings, smtpPassword: e.target.value })}
                       className="h-10 text-xs font-mono border-slate-200 bg-white text-slate-900 rounded-xl"
@@ -731,7 +722,7 @@ export const SettingsPage: React.FC = () => {
                       <span className="text-[11px] text-slate-400">可选，默认使用发信账号</span>
                     </div>
                     <Input
-                      placeholder="如 BobAPI 运维监控 <alert@domain.com>"
+                      placeholder="如 BobAPI 运维监控 <123456@qq.com>"
                       value={settings.smtpFrom || ''}
                       onChange={(e) => setSettings({ ...settings, smtpFrom: e.target.value })}
                       className="h-10 text-xs border-slate-200 bg-white text-slate-900 rounded-xl"

@@ -1,16 +1,18 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { useAuthStore } from '@/stores/authStore'
 import { HomePage } from '@/pages/public/HomePage'
-import { LoginPage } from '@/pages/auth/LoginPage'
-import { AdminLayout } from '@/layouts/AdminLayout'
-import { DashboardPage } from '@/pages/admin/DashboardPage'
-import { ProjectsPage } from '@/pages/admin/ProjectsPage'
-import { ProjectDetailPage } from '@/pages/admin/ProjectDetailPage'
-import { MonitorHistoryPage } from '@/pages/admin/MonitorHistoryPage'
-import { SettingsPage } from '@/pages/admin/SettingsPage'
+
+// Lazy load non-homepage routes to significantly reduce initial bundle size & load time
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage })))
+const AdminLayout = lazy(() => import('@/layouts/AdminLayout').then(m => ({ default: m.AdminLayout })))
+const DashboardPage = lazy(() => import('@/pages/admin/DashboardPage').then(m => ({ default: m.DashboardPage })))
+const ProjectsPage = lazy(() => import('@/pages/admin/ProjectsPage').then(m => ({ default: m.ProjectsPage })))
+const ProjectDetailPage = lazy(() => import('@/pages/admin/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })))
+const MonitorHistoryPage = lazy(() => import('@/pages/admin/MonitorHistoryPage').then(m => ({ default: m.MonitorHistoryPage })))
+const SettingsPage = lazy(() => import('@/pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +36,16 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>
 }
 
+// Fallback spinner when lazy loading backoffice routes
+const RouteLoadingFallback: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <span className="text-xs text-slate-500 font-medium">模块载入中...</span>
+    </div>
+  </div>
+)
+
 export const App: React.FC = () => {
   const { initialize } = useAuthStore()
 
@@ -44,30 +56,32 @@ export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          {/* Public Portal */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <Routes>
+            {/* Public Portal (Synchronous zero-delay render) */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* Admin Backoffice Protected Routes */}
-          <Route
-            path="/admin"
-            element={
-              <RequireAuth>
-                <AdminLayout />
-              </RequireAuth>
-            }
-          >
-            <Route index element={<DashboardPage />} />
-            <Route path="projects" element={<ProjectsPage />} />
-            <Route path="projects/:id" element={<ProjectDetailPage />} />
-            <Route path="monitor" element={<MonitorHistoryPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
+            {/* Admin Backoffice Protected Routes */}
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth>
+                  <AdminLayout />
+                </RequireAuth>
+              }
+            >
+              <Route index element={<DashboardPage />} />
+              <Route path="projects" element={<ProjectsPage />} />
+              <Route path="projects/:id" element={<ProjectDetailPage />} />
+              <Route path="monitor" element={<MonitorHistoryPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
 
       {/* Global Notifications */}

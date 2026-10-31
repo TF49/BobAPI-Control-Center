@@ -19,6 +19,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-query': ['@tanstack/react-query', 'axios', 'zustand'],
+          'vendor-utils': ['clsx', 'tailwind-merge'],
           'vendor-charts': ['recharts'],
           'vendor-ui': [
             '@radix-ui/react-dialog',
@@ -35,7 +36,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8082',
         changeOrigin: true
       }
     }

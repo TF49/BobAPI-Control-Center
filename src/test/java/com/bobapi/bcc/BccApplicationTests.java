@@ -53,11 +53,11 @@ class BccApplicationTests {
         assertFalse(users.isEmpty(), "用户表不应为空");
         User admin = users.stream().filter(u -> "admin".equals(u.getUsername())).findFirst().orElse(null);
         assertNotNull(admin, "初始管理员 admin 应当存在");
-        assertTrue(passwordEncoder.matches("admin123", admin.getPasswordHash()), "初始密码 admin123 应当匹配");
+        assertTrue(passwordEncoder.matches("BccAdmin#2026!SecOps99", admin.getPasswordHash()), "管理员密码应当匹配新设置的高强度密码");
 
         // 验证项目数与预置/新增项目
         List<Project> projects = projectMapper.selectList(null);
-        assertTrue(projects.size() >= 8, "项目数应当至少为8个");
+        assertTrue(projects.size() >= 9, "项目数应当至少为9个");
         Project invoice = projects.stream().filter(p -> "https://fp.bobdong.cn/".equals(p.getUrl())).findFirst().orElse(null);
         assertNotNull(invoice, "Invoice 发票管理系统项目应当存在");
         assertEquals("Invoice", invoice.getName());
@@ -72,12 +72,18 @@ class BccApplicationTests {
         assertNotNull(dongToken, "DongToken 项目应当存在");
         assertEquals("DongToken", dongToken.getName());
         assertEquals("dongtoken", dongToken.getCode());
+
+        Project dyVideo = projects.stream().filter(p -> "https://dy.bobdong.cn/".equals(p.getUrl())).findFirst().orElse(null);
+        assertNotNull(dyVideo, "DY Video 短视频项目应当存在");
+        assertEquals("DY Video", dyVideo.getName());
+        assertEquals("dy-video", dyVideo.getCode());
     }
 
     @Test
     void testUrlSafetyValidator() {
         // 白名单测试 (bob-api.com、bobdong.cn 及 dongtoken.com)
         assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://fp.bobdong.cn/"));
+        assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://dy.bobdong.cn/"));
         assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://vpn.bob-api.com/"));
         assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://bob-api.com/"));
         assertDoesNotThrow(() -> urlSafetyValidator.validateUrl("https://dongtoken.com/"));
