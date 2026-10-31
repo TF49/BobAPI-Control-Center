@@ -92,7 +92,7 @@ export const MonitorHistoryPage: React.FC = () => {
       })
 
       if (res.data) {
-        setLogs(res.data.records || [])
+        setLogs((res.data.records || []).slice(0, pageSize))
         setTotal(res.data.total || 0)
       }
     } catch (err) {

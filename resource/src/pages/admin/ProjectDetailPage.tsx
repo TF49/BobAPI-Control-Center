@@ -54,7 +54,7 @@ export const ProjectDetailPage: React.FC = () => {
       if (projRes.data) setProject(projRes.data)
       if (statsRes.data) setStats(statsRes.data)
       if (trendRes.data) setTrend(trendRes.data)
-      if (histRes.data && histRes.data.records) setHistory(histRes.data.records)
+      if (histRes.data && histRes.data.records) setHistory(histRes.data.records.slice(0, 10))
     } catch (err) {
       console.error(err)
     } finally {

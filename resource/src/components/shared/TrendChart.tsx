@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -16,7 +16,7 @@ interface TrendChartProps {
   height?: number
 }
 
-export const TrendChart: React.FC<TrendChartProps> = ({
+export const TrendChart: React.FC<TrendChartProps> = memo(({
   data,
   type = 'uptime',
   height = 240
@@ -95,9 +95,10 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             strokeWidth={2}
             fillOpacity={1}
             fill={`url(#gradient-${type})`}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
     </div>
   )
-}
+})

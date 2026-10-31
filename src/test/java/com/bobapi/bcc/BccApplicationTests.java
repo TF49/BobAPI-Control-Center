@@ -46,6 +46,12 @@ class BccApplicationTests {
     @Autowired
     private ProjectService projectService;
 
+    @Autowired
+    private com.bobapi.bcc.service.MonitorService monitorService;
+
+    @Autowired
+    private com.bobapi.bcc.mapper.MonitorCheckResultMapper monitorCheckResultMapper;
+
     @Test
     void testContextLoadsAndSeedData() {
         // 验证用户表中存在 admin
@@ -156,5 +162,26 @@ class BccApplicationTests {
                 assertTrue(!t1.isBefore(t2), "创建时间应当降序排列");
             }
         }
+    }
+
+    @Test
+    void testMonitorHistoryPaginationAndInterception() {
+        // 插入若干测试检查数据
+        for (int i = 0; i < 5; i++) {
+            com.bobapi.bcc.entity.MonitorCheckResult check = new com.bobapi.bcc.entity.MonitorCheckResult();
+            check.setProjectId(1L);
+            check.setCheckTime(LocalDateTime.now().minusMinutes(i));
+            check.setIsSuccess(true);
+            check.setHttpStatus(200);
+            check.setResponseTime(50L + i);
+            check.setTriggerType("SCHEDULE");
+            monitorCheckResultMapper.insert(check);
+        }
+
+        // 验证分页插件生效：指定 size=2 时必须严格仅返回 2 条记录，且 total >= 5
+        Page<com.bobapi.bcc.entity.MonitorCheckResult> page = monitorService.getHistoryPage(1, 2, 1L, true, "SCHEDULE", 200, null, null, null, "checkTime", "desc");
+        assertNotNull(page);
+        assertEquals(2, page.getRecords().size(), "分页拦截器必须限制当前页记录数为 2，禁止全表加载");
+        assertTrue(page.getTotal() >= 5, "分页拦截器必须正确统计总条数 total");
     }
 }

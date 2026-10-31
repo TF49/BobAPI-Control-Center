@@ -83,7 +83,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Page<Project> getProjectPage(int page, int size, String keyword, String category, String status, Boolean isEnabled, String sortBy, String sortOrder) {
-        Page<Project> pageParam = new Page<>(page, size);
+        int safePage = Math.max(1, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        Page<Project> pageParam = new Page<>(safePage, safeSize);
         LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
 
         if (StringUtils.hasText(keyword)) {

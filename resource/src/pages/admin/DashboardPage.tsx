@@ -34,6 +34,7 @@ export const DashboardPage: React.FC = () => {
   const [recentChecks, setRecentChecks] = useState<MonitorCheckResult[]>([])
   const [selectedDays, setSelectedDays] = useState<number>(1)
   const [loading, setLoading] = useState(true)
+  const [trendLoading, setTrendLoading] = useState(false)
 
   const loadData = async () => {
     setLoading(true)
@@ -46,7 +47,9 @@ export const DashboardPage: React.FC = () => {
 
       if (sumRes.data) setSummary(sumRes.data)
       if (trendRes.data) setTrends(trendRes.data)
-      if (histRes.data && histRes.data.records) setRecentChecks(histRes.data.records)
+      if (histRes.data && histRes.data.records) {
+        setRecentChecks(histRes.data.records.slice(0, 7))
+      }
     } catch (err) {
       console.error('Failed to load dashboard data', err)
     } finally {
@@ -54,9 +57,26 @@ export const DashboardPage: React.FC = () => {
     }
   }
 
+  const loadTrendOnly = async (days: number) => {
+    setTrendLoading(true)
+    try {
+      const res = await getGlobalTrend(days)
+      if (res.data) setTrends(res.data)
+    } catch (err) {
+      console.error('Failed to load trend data', err)
+    } finally {
+      setTrendLoading(false)
+    }
+  }
+
   useEffect(() => {
     loadData()
-  }, [selectedDays])
+  }, [])
+
+  const handleRangeChange = (days: number) => {
+    setSelectedDays(days)
+    loadTrendOnly(days)
+  }
 
   return (
     <div className="space-y-8">
@@ -149,12 +169,13 @@ export const DashboardPage: React.FC = () => {
               ].map((item) => (
                 <button
                   key={item.days}
-                  onClick={() => setSelectedDays(item.days)}
+                  onClick={() => handleRangeChange(item.days)}
+                  disabled={trendLoading}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                     selectedDays === item.days
                       ? 'bg-white text-blue-600 font-semibold shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  } ${trendLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   {item.label}
                 </button>

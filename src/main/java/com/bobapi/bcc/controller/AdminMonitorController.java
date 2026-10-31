@@ -38,6 +38,7 @@ public class AdminMonitorController {
             @RequestParam(defaultValue = "15") int size,
             @RequestParam(required = false) Long projectId,
             @RequestParam(required = false) Boolean isSuccess,
+            @RequestParam(required = false) String triggerType,
             @RequestParam(required = false) Integer httpStatus,
             @RequestParam(required = false) String errorType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
@@ -45,7 +46,8 @@ public class AdminMonitorController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortOrder) {
         int pageNum = (current != null) ? current : page;
-        return Result.success(monitorService.getHistoryPage(pageNum, size, projectId, isSuccess, httpStatus, errorType, startTime, endTime, sortBy, sortOrder));
+        int pageSize = Math.max(1, Math.min(size, 100));
+        return Result.success(monitorService.getHistoryPage(pageNum, pageSize, projectId, isSuccess, triggerType, httpStatus, errorType, startTime, endTime, sortBy, sortOrder));
     }
 
     @GetMapping("/monitor/projects/{id}/history")

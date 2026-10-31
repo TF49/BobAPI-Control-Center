@@ -68,12 +68,19 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public Page<MonitorCheckResult> getHistoryPage(int page, int size, Long projectId, Boolean isSuccess, Integer httpStatus, String errorType, LocalDateTime startTime, LocalDateTime endTime) {
-        return getHistoryPage(page, size, projectId, isSuccess, httpStatus, errorType, startTime, endTime, null, null);
+        return getHistoryPage(page, size, projectId, isSuccess, null, httpStatus, errorType, startTime, endTime, null, null);
     }
 
     @Override
     public Page<MonitorCheckResult> getHistoryPage(int page, int size, Long projectId, Boolean isSuccess, Integer httpStatus, String errorType, LocalDateTime startTime, LocalDateTime endTime, String sortBy, String sortOrder) {
-        Page<MonitorCheckResult> pageParam = new Page<>(page, size);
+        return getHistoryPage(page, size, projectId, isSuccess, null, httpStatus, errorType, startTime, endTime, sortBy, sortOrder);
+    }
+
+    @Override
+    public Page<MonitorCheckResult> getHistoryPage(int page, int size, Long projectId, Boolean isSuccess, String triggerType, Integer httpStatus, String errorType, LocalDateTime startTime, LocalDateTime endTime, String sortBy, String sortOrder) {
+        int safePage = Math.max(1, page);
+        int safeSize = Math.max(1, Math.min(size, 200));
+        Page<MonitorCheckResult> pageParam = new Page<>(safePage, safeSize);
         LambdaQueryWrapper<MonitorCheckResult> wrapper = new LambdaQueryWrapper<>();
 
         if (projectId != null) {
@@ -82,11 +89,14 @@ public class MonitorServiceImpl implements MonitorService {
         if (isSuccess != null) {
             wrapper.eq(MonitorCheckResult::getIsSuccess, isSuccess);
         }
+        if (StringUtils.hasText(triggerType)) {
+            wrapper.eq(MonitorCheckResult::getTriggerType, triggerType.trim());
+        }
         if (httpStatus != null) {
             wrapper.eq(MonitorCheckResult::getHttpStatus, httpStatus);
         }
         if (StringUtils.hasText(errorType)) {
-            wrapper.eq(MonitorCheckResult::getErrorType, errorType);
+            wrapper.eq(MonitorCheckResult::getErrorType, errorType.trim());
         }
         if (startTime != null) {
             wrapper.ge(MonitorCheckResult::getCheckTime, startTime);
