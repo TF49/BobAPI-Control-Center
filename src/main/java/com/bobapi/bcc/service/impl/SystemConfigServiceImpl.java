@@ -106,7 +106,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private SettingsDTO buildSettingsFromMap(Map<String, String> map) {
         return SettingsDTO.builder()
                 .defaultCheckInterval(getInt(map, "default_check_interval", 600))
-                .defaultTimeoutSeconds(getInt(map, "default_timeout_seconds", 10))
+                .defaultTimeoutSeconds(getInt(map, "default_timeout_seconds", 60))
                 .retryOnFailure(Boolean.parseBoolean(map.getOrDefault("retry_on_failure", "true")))
                 .publicRefreshInterval(getInt(map, "public_refresh_interval", 30))
                 .historyRetentionDays(getInt(map, "history_retention_days", 30))

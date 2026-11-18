@@ -46,7 +46,7 @@ public class MonitorExecutor {
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(Duration.ofSeconds(10))
+                .connectTimeout(Duration.ofSeconds(60))
                 .build();
     }
 
@@ -55,7 +55,7 @@ public class MonitorExecutor {
      */
     public MonitorCheckResult executeCheck(Project project, String triggerType) {
         LocalDateTime checkTime = LocalDateTime.now(ZoneOffset.UTC);
-        int defaultTimeout = 10;
+        int defaultTimeout = 60;
         try {
             defaultTimeout = configService.getSettings().getDefaultTimeoutSeconds();
         } catch (Exception ignored) {

@@ -37,5 +37,6 @@ export const toggleProjectEnabled = (id: number, enabled: boolean): Promise<Resu
 }
 
 export const manualTriggerCheck = (id: number): Promise<Result<any>> => {
-  return apiClient.post(`/admin/projects/${id}/check`)
+  // 手动触发探测时可能包含最长 60s 探测 + 1s 复查间隔 + 60s 重试，设置专用长超时
+  return apiClient.post(`/admin/projects/${id}/check`, null, { timeout: 130000 })
 }

@@ -96,7 +96,7 @@ export const ProjectsPage: React.FC = () => {
     isEnabled: true,
     isMonitorEnabled: true,
     checkInterval: 10,
-    timeoutSeconds: 5,
+    timeoutSeconds: 60,
     expectedStatusCode: '200'
   })
 
@@ -224,7 +224,7 @@ export const ProjectsPage: React.FC = () => {
       isEnabled: true,
       isMonitorEnabled: true,
       checkInterval: 10,
-      timeoutSeconds: 5,
+      timeoutSeconds: 60,
       expectedStatusCode: '200'
     })
     setDialogOpen(true)
@@ -243,7 +243,7 @@ export const ProjectsPage: React.FC = () => {
       isEnabled: p.isEnabled,
       isMonitorEnabled: p.isMonitorEnabled,
       checkInterval: p.checkInterval || 10,
-      timeoutSeconds: p.timeoutSeconds || 5,
+      timeoutSeconds: p.timeoutSeconds || 60,
       expectedStatusCode: p.expectedStatusCode || '200'
     })
     setDialogOpen(true)
@@ -939,9 +939,9 @@ export const ProjectsPage: React.FC = () => {
                   <Input
                     type="number"
                     min="1"
-                    max="60"
+                    max="300"
                     value={form.timeoutSeconds}
-                    onChange={(e) => setForm({ ...form, timeoutSeconds: parseInt(e.target.value) || 5 })}
+                    onChange={(e) => setForm({ ...form, timeoutSeconds: parseInt(e.target.value) || 60 })}
                     className="h-8 text-xs font-mono border-slate-200 bg-white text-slate-900 rounded-lg"
                   />
                 </div>

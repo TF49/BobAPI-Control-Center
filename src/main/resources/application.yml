@@ -46,7 +46,7 @@ bcc:
     # 默认检查周期(秒)
     default-interval: 600
     # 默认超时时间(秒)
-    default-timeout: 10
+    default-timeout: 60
     # 线程池核心大小
     thread-pool-core-size: 5
     thread-pool-max-size: 10

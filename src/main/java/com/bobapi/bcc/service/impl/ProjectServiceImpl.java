@@ -147,7 +147,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         int defaultInterval = 600;
-        int defaultTimeout = 10;
+        int defaultTimeout = 60;
         try {
             defaultInterval = configService.getSettings().getDefaultCheckInterval();
             defaultTimeout = configService.getSettings().getDefaultTimeoutSeconds();

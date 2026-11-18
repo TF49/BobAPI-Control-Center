@@ -171,7 +171,7 @@ export const ProjectDetailPage: React.FC = () => {
         <MetricCard
           title="检测配置策略"
           value={`每 ${project?.checkInterval || 10} 分钟`}
-          subtitle={`超时 ${project?.timeoutSeconds || 5} 秒 · 期望 ${project?.expectedStatusCode || '200'}`}
+          subtitle={`超时 ${project?.timeoutSeconds || 60} 秒 · 期望 ${project?.expectedStatusCode || '200'}`}
           icon={<Globe className="w-5 h-5 text-amber-600" />}
           iconBg="bg-amber-50 text-amber-600 border-amber-200"
           trendColor="amber"

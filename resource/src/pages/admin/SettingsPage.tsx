@@ -29,7 +29,7 @@ import { toast } from 'sonner'
 export const SettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<Settings>({
     defaultCheckInterval: 10,
-    defaultTimeoutSeconds: 5,
+    defaultTimeoutSeconds: 60,
     retryOnFailure: true,
     publicRefreshInterval: 30,
     historyRetentionDays: 30,
@@ -165,7 +165,7 @@ export const SettingsPage: React.FC = () => {
   const handleRestoreDefaults = () => {
     setSettings({
       defaultCheckInterval: 10,
-      defaultTimeoutSeconds: 5,
+      defaultTimeoutSeconds: 60,
       retryOnFailure: true,
       publicRefreshInterval: 30,
       historyRetentionDays: 30,
@@ -383,12 +383,12 @@ export const SettingsPage: React.FC = () => {
                       <Input
                         type="number"
                         min="1"
-                        max="60"
+                        max="300"
                         value={settings.defaultTimeoutSeconds}
                         onChange={(e) =>
                           setSettings({
                             ...settings,
-                            defaultTimeoutSeconds: parseInt(e.target.value) || 5
+                            defaultTimeoutSeconds: parseInt(e.target.value) || 60
                           })
                         }
                         className="h-10 pr-14 text-xs font-mono font-medium border-slate-200 bg-white text-slate-900 rounded-xl focus-visible:ring-blue-500"
@@ -401,7 +401,7 @@ export const SettingsPage: React.FC = () => {
 
                     {/* Quick Timeout Pills */}
                     <div className="flex items-center gap-1.5 pt-1">
-                      {[2, 3, 5, 10, 15].map((sec) => (
+                      {[5, 10, 30, 60, 120].map((sec) => (
                         <button
                           key={sec}
                           type="button"
